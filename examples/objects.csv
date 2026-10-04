@@ -1,0 +1,4 @@
+sample_id,image_path,label,group,x1,y1,x2,y2
+point-101,metal_001.jpg,scratch,metal_001,100,80,260,140
+point-102,metal_001.jpg,pitting,metal_001,300,100,390,200
+point-103,metal_002.jpg,crack,metal_002,20,30,70,160
