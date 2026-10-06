@@ -6,15 +6,51 @@ preprocessing сохраняются для проверки в соседнем
 
 ## Установка
 
-Нужны Python 3.10+, PyTorch и torchvision для вашего CPU/CUDA. Установите их
-по [официальной инструкции PyTorch](https://pytorch.org/get-started/locally/), затем:
+Требуется Python 3.10+ и установленный Git. Создайте и активируйте окружение:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+```
+
+В Windows PowerShell для активации используйте `.venv\Scripts\Activate.ps1`.
+Если окружение уже создано, достаточно активировать его.
+
+В этом окружении установите PyTorch и torchvision для вашего CPU/CUDA
+по [официальной инструкции PyTorch](https://pytorch.org/get-started/locally/).
+Затем установите пакет напрямую из GitHub:
+
+```bash
+python -m pip install "dinov3-embedder @ git+https://github.com/Wasilkas/dinov3-embedder.git@main"
+```
+
+Для разработки, включая Ruff и mypy, используйте `dinov3-embedder[dev]`
+вместо `dinov3-embedder` перед ` @ git+https://...`.
+
+При настроенном SSH-доступе к GitHub можно использовать:
+
+```bash
+python -m pip install "dinov3-embedder @ git+ssh://git@github.com/Wasilkas/dinov3-embedder.git@main"
+```
+
+`@main` выбирает ветку; для воспроизводимой установки замените `main` на тег
+или полный хеш коммита.
+
+Для проверки качества полученных эмбеддингов установите второй пакет
+в то же окружение:
+
+```bash
+python -m pip install "embeddings-quality[plots] @ git+https://github.com/Wasilkas/embeddings-quality.git@main"
+```
+
+Для разработки из локальных копий, находясь в общей папке `digital`:
 
 ```bash
 python -m pip install -e ./dinov3-embedder
 python -m pip install -e './embeddings-quality[plots]'
 ```
 
-Это команды из общей папки `digital`. Из самой папки `dinov3-embedder`
+Из самой папки `dinov3-embedder`
 используйте `python -m pip install -e .`.
 
 Backend — Hugging Face `AutoModel` + `AutoImageProcessor`. По умолчанию
