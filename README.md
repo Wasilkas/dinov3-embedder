@@ -153,15 +153,22 @@ annotations до загрузки. Изображения без annotations н�
 ## CSV и CLI
 
 ```csv
-sample_id,image_path,label,group,x1,y1,x2,y2
-point-101,metal_001.jpg,scratch,metal_001,100,80,260,140
-point-102,metal_001.jpg,pitting,metal_001,300,100,390,200
-point-103,metal_002.jpg,crack,metal_002,20,30,70,160
+image_path,instance_label,bbox_x_tl,bbox_y_tl,bbox_x_br,bbox_y_br
+metal_001.jpg,scratch,100,80,260,140
+metal_001.jpg,pitting,300,100,390,200
+metal_002.jpg,crack,20,30,70,160
 ```
 
-Обязательны `sample_id` и `image_path`. `label`, `group`, bbox необязательны.
-Без bbox используется полное изображение. Если bbox задан, нужны все четыре
-координаты. По умолчанию group — полный путь к исходному изображению.
+Обязательны все шесть столбцов: `image_path`, `instance_label`, `bbox_x_tl`,
+`bbox_y_tl`, `bbox_x_br`, `bbox_y_br`. Их значения должны быть заполнены в каждой
+строке. `instance_label` становится меткой объекта; координаты задают левый верхний
+и правый нижний углы bbox в абсолютных пикселях.
+
+Дополнительно можно указать `sample_id` и `group`. Если столбца `sample_id` нет,
+ID генерируются по порядку объектов: `1`, `2`, `3`, … (строки). При изменении
+порядка CSV эти ID изменятся; для сопоставления с Qdrant или другой выгрузкой
+задавайте собственные непустые уникальные `sample_id`.
+По умолчанию group — полный путь к исходному изображению.
 Относительные пути разрешаются относительно CSV/JSON либо `image_root`.
 
 ```bash

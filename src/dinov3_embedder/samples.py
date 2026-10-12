@@ -27,38 +27,40 @@ def _root(manifest: str | Path, image_root: str | Path | None) -> Path:
 def load_csv(path: str | Path, *, image_root: str | Path | None = None) -> list[ImageSample]:
     """Read object rows; relative image paths resolve against image_root or CSV parent.
 
-    Required: sample_id, image_path. Optional: label, group,
-    x1/y1/x2/y2 (all four, in absolute pixels). Default group is image path.
+    Required: image_path, instance_label, bbox_x_tl, bbox_y_tl, bbox_x_br,
+    bbox_y_br (coordinates in absolute pixels). Optional: sample_id, group.
+    Without sample_id, IDs are 1-based object indices as strings.
+    Default group is image path.
     """
     root = _root(path, image_root)
     with Path(path).open(encoding="utf-8-sig", newline="") as file:
         reader = csv.DictReader(file)
         columns = set(reader.fieldnames or ())
-        if not {"sample_id", "image_path"} <= columns:
-            raise ValueError("CSV needs sample_id and image_path columns.")
-        bbox_columns = {"x1", "y1", "x2", "y2"}
-        if columns & bbox_columns and not bbox_columns <= columns:
-            raise ValueError("CSV needs all four bbox columns: x1,y1,x2,y2.")
+        bbox_columns = ("bbox_x_tl", "bbox_y_tl", "bbox_x_br", "bbox_y_br")
+        required = ("image_path", "instance_label", *bbox_columns)
+        missing = [key for key in required if key not in columns]
+        if missing:
+            raise ValueError(f"CSV needs required columns: {', '.join(missing)}.")
         samples = []
         for row_number, row in enumerate(reader, 2):
-            if not row["sample_id"] or not row["image_path"]:
-                raise ValueError(f"CSV row {row_number}: empty sample_id/image_path.")
+            checked = (*required, "sample_id") if "sample_id" in columns else required
+            empty = [key for key in checked if not (row.get(key) or "").strip()]
+            if empty:
+                raise ValueError(f"CSV row {row_number}: empty {', '.join(empty)}.")
             image = (root / row["image_path"]).resolve()
-            bbox = None
-            if bbox_columns <= columns:
-                coordinates = [row[key] for key in ("x1", "y1", "x2", "y2")]
-                if any(coordinates):
-                    if not all(coordinates):
-                        raise ValueError(f"CSV row {row_number}: partial bbox.")
-                    x1, y1, x2, y2 = (float(v) for v in coordinates)
-                    bbox = (x1, y1, x2, y2)
+            try:
+                x1, y1, x2, y2 = (float(row[key]) for key in bbox_columns)
+            except ValueError as exc:
+                raise ValueError(
+                    f"CSV row {row_number}: bbox coordinates must be numbers."
+                ) from exc
             samples.append(
                 ImageSample(
-                    sample_id=row["sample_id"],
+                    sample_id=row["sample_id"] if "sample_id" in columns else str(row_number - 1),
                     image=image,
-                    label=row.get("label") or None,
+                    label=row["instance_label"],
                     group=row.get("group") or str(image),
-                    bbox=bbox,
+                    bbox=(x1, y1, x2, y2),
                 )
             )
     _validate_samples(samples)

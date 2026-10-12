@@ -121,8 +121,8 @@ def test_cli_full_local_pipeline(tmp_path, local_model, capsys):
     Image.new("RGB", (64, 48), (100, 20, 10)).save(tmp_path / "metal.png")
     manifest = tmp_path / "objects.csv"
     manifest.write_text(
-        "sample_id,image_path,label,x1,y1,x2,y2\n"
-        "q1,metal.png,scratch,0,0,32,32\nq2,metal.png,crack,32,0,64,32\n",
+        "image_path,instance_label,bbox_x_tl,bbox_y_tl,bbox_x_br,bbox_y_br\n"
+        "metal.png,scratch,0,0,32,32\nmetal.png,crack,32,0,64,32\n",
     )
     output = tmp_path / "cli.npz"
     assert (
@@ -145,6 +145,8 @@ def test_cli_full_local_pipeline(tmp_path, local_model, capsys):
     assert "2 embeddings of dimension 64" in capsys.readouterr().out
     with np.load(output, allow_pickle=False) as data:
         assert data["embeddings"].shape == (2, 64)
+        np.testing.assert_array_equal(data["sample_ids"], ["1", "2"])
+        np.testing.assert_array_equal(data["labels"], ["scratch", "crack"])
         assert data["groups"][0] == data["groups"][1]
 
 
